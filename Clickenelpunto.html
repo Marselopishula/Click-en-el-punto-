@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Click</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #game-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            border: 2px solid black;
+        }
+
+        .point {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+        }
+
+        #green-point {
+            background-color: green;
+        }
+
+        #red-point {
+            background-color: red;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="green-point" class="point"></div>
+        <div id="red-point" class="point"></div>
+    </div>
+    <p>Puntuación: <span id="score">0</span></p>
+    <p>Record: <span id="record">0</span></p>
+    <button onclick="restartGame()">Reiniciar</button>
+
+    <script>
+        let score = 0;
+        let record = localStorage.getItem('record') || 0;
+        let pointInterval = 900; // Tiempo en milisegundos antes de que aparezcan los puntos nuevamente
+        let clickTimeLimit = 1000; // Tiempo en milisegundos para hacer clic
+        let gameRunning = false;
+
+        document.getElementById('record').innerText = record;
+
+        function getRandomPosition() {
+            const container = document.getElementById('game-container');
+            const maxX = container.clientWidth - 20;
+            const maxY = container.clientHeight - 20;
+            const x = Math.floor(Math.random() * maxX);
+            const y = Math.floor(Math.random() * maxY);
+            return { x, y };
+        }
+
+        function startGame() {
+            if (gameRunning) {
+                return;
+            }
+
+            gameRunning = true;
+
+            const greenPoint = document.getElementById('green-point');
+            const redPoint = document.getElementById('red-point');
+
+            greenPoint.style.display = 'none';
+            redPoint.style.display = 'none';
+
+            setTimeout(function () {
+                const greenPosition = getRandomPosition();
+                const redPosition = getRandomPosition();
+
+                greenPoint.style.left = `${greenPosition.x}px`;
+                greenPoint.style.top = `${greenPosition.y}px`;
+
+                redPoint.style.left = `${redPosition.x}px`;
+                redPoint.style.top = `${redPosition.y}px`;
+
+                greenPoint.style.display = 'block';
+                redPoint.style.display = 'block';
+
+                const startTime = new Date().getTime();
+
+                redPoint.onclick = function () {
+                    endGame(startTime);
+                };
+
+                greenPoint.onclick = function () {
+                    const endTime = new Date().getTime();
+                    const elapsedTime = endTime - startTime;
+
+                    if (elapsedTime <= clickTimeLimit) {
+                        if (elapsedTime <= 500) {
+                            score += 100;
+                        } else {
+                            score += 50;
+                        }
+
+                        document.getElementById('score').innerText = score;
+                    }
+
+                    greenPoint.style.display = 'none';
+                    redPoint.style.display = 'none';
+                    gameRunning = false;
+                    startGame();
+                };
+
+                setTimeout(function () {
+                    greenPoint.style.display = 'none';
+                    redPoint.style.display = 'none';
+                    gameRunning = false;
+                    startGame();
+                }, pointInterval);
+            }, 100);
+        }
+
+        function endGame(startTime) {
+            alert('Has perdido. Puntuación: ' + score);
+
+            if (score > record) {
+                record = score;
+                localStorage.setItem('record', record);
+                document.getElementById('record').innerText = record;
+            }
+
+            score = 0;
+            document.getElementById('score').innerText = score;
+
+            gameRunning = false;
+            startGame();
+        }
+
+        function restartGame() {
+            score = 0;
+            document.getElementById('score').innerText = score;
+
+            gameRunning = false;
+            startGame();
+        }
+
+        startGame();
+    </script>
+</body>
+</html>
+
+
+
